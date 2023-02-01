@@ -58,7 +58,7 @@ class band_structure(inputs):
  def write_to_qtl_fermisurfer(self):
   write_to_qtl_fermisurfer(self.bvec,self.ENE,self.all_kpoints_indexes,self.E_f,self.only_ENE_weights,inputs.dos_file,self.qtl)
  def read_qtl(self):
-  self.qtl=read_qtl(inputs.qtl_file,inputs.so)
+  self.qtl,self.No_of_bands,self.n_k,self.n_at=read_qtl(inputs.qtl_file,inputs.so)
 
 def calc_fermi_velocity(ENE,all_kpoints_index,avec,nk3,No_of_fermi_bands):
     de=[0 for i in range(3)]
@@ -312,7 +312,6 @@ def which_bands_cross_ef(ENE,ALMBLM,qtl,E_f):
    if ENE[k][i]<band_ranges[i][0]: band_ranges[i][0]=ENE[k][i]
    elif ENE[k][i]>band_ranges[i][1]: band_ranges[i][1]=ENE[k][i]
  for ni,i in enumerate(band_ranges):
-  print ni,i
   if i[0]<E_f and i[1]>E_f: chosen_bands.append(ni)
 
  print ('bands crossing ef: ',chosen_bands,'EF=',E_f)
@@ -372,7 +371,10 @@ def read_qtl(qtl_file,so):
        at[nb][nk][nl]=(at[nb][nk][nl]+at[nb+1][nk][nl])/2.
        at[nb+1][nk][nl]=at[nb][nk][nl]
     
- return qtl #qtl[at][band][k][l]
+ n_at=len(qtl)
+ No_of_bands=max([len(i) for i in qtl])
+ n_k=len(qtl[0][0])
+ return qtl, No_of_bands, n_k, n_at #qtl[at][band][k][l]
 
 
 

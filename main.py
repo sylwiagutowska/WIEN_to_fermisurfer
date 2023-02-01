@@ -3,7 +3,7 @@ from band_structure import *
 from real_structure import *
 
 
-
+print("Hello! Reminder: In order to get FS, you need to run me in directory, where you have calculated DOS")
 inputs=inputs()
 inputs.run_calculations()
 mode=input("Should I color a fermi surface with orbital character or velocity o/[v]?")

@@ -33,7 +33,7 @@ def checkso(prefix):
 class inputs:
   prefix=os.getcwd().split('/')[-1]
   CIN=(1/137.0359895)
-  qtl_file=prefix+'.qtl'
+  qtl_file='for_qtl_fs/for_qtl_fs.qtl'
   dos_file=prefix+'.outputt'
   almblm_file=prefix+'.almblm'
   ene_file=prefix+'.energy'
@@ -42,37 +42,49 @@ class inputs:
   scf_file=prefix+'.scf0'
   so=checkso(prefix) 
   n_l=5 #n_l nieograniczone daje dokladnie te same wyniki co n_l=5; n_l=4 zmienia wynik o 0.01%
-  nk=48
-  def run_calculations():
-   yn='n'
-#   yn=input('should I run calc? y/[n]: ')
-   if yn=='y': 
-    run_calc(inputs)
+  nk=12
+  def run_calculations(self):
+    run_calc(self.prefix)
+ #   os.system("cd hopfield_calc")
+ 
+    
 
 
-
-
-def run_calc(inputs):
+def run_calc(prefix):
+ name='for_qtl_fs'
  so=''
- if os.stat(inputs.prefix+'.inso').st_size!=0: so=' -so '
- os.system('rm -r hopfield_calc_old; mv hopfield_calc hopfield_calc_old; cp -r run_lapw  hopfield_calc')
- os.system('cp .machines hopfield_calc')
- os.chdir('hopfield_calc')
+ if os.stat(prefix+'.inso').st_size!=0: so=' -so '
+ os.system('rm -r '+name+'; save_lapw -d '+name)
+ os.system('cp .machines '+name+'/.')
+ os.chdir(name)
 # os.system('pwd')
 # exit()
- os.system('rename_files '+inputs.prefix+' hopfield_calc')
- os.system("x kgen <<'EOF'\n0\n+"+str(inputs.nk)+" "+str(inputs.nk)+" "+str(inputs.nk)+" \n1\nEOF")
- os.system("sed -i 's/NR2V/R2V/' hopfield_calc.in0")
- os.system("sed -i 's/CONT 1/CONT 0/' hopfield_calc.in1")
- os.system("sed -i 's/STOP 1/STOP 0/' hopfield_calc.in1")
- os.system("sed -i 's/1      (GLOBAL/0      (GLOBAL/' hopfield_calc.in1")
- os.system("run_lapw -ec 0.00001 -cc 0.001")
- os.system("rm -r run_lapw "+so+"-p; save_lapw -d run_lapw")
- os.system("x lapw1 -p")
- if len(so): os.system("x lapwso -p")
- os.system("x lapw2 "+so+" -alm -p")
+ os.system('rename_files '+prefix+' '+name)
+ 
+ h=open(name+'.in2')
+ tmp=h.readlines()
+ h.close()
+ line1=tmp[1]
+ noe=float(line1.split()[1])
+ noe=round(1.5*noe)
+ line=line1[:8]+"{:6d}".format(noe)+line1[14:]
+ tmp[1]=line
+ h=open(name+'.in2','w')
+ for l in tmp:
+  h.write(l)
+ h.close()
+ if os.stat(name+'.in2c').st_size!=0:
+  h=open(name+'.in2c')
+  tmp=h.readlines()
+  h.close()
+  tmp[1]=line
+  h=open(name+'.in2c','w')
+  for l in tmp:
+   h.write(l)
+  h.close()
+ os.system("x lapw1 -qtl -p")
+ if len(so):  os.system("x lapwso -qtl -p")
  os.system("x lapw2 "+so+" -qtl -p")
- os.system("x tetra ; x tetra "+so+"-p")
  os.chdir('..')
 
 #ins=inputs()
