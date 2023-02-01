@@ -42,7 +42,6 @@ class inputs:
   scf_file=prefix+'.scf0'
   so=checkso(prefix) 
   n_l=5 #n_l nieograniczone daje dokladnie te same wyniki co n_l=5; n_l=4 zmienia wynik o 0.01%
-  nk=12
   def run_calculations(self):
     run_calc(self.prefix)
  #   os.system("cd hopfield_calc")

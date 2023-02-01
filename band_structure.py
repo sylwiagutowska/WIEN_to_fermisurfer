@@ -50,13 +50,13 @@ class band_structure(inputs):
   self.fermi_vel=calc_fermi_velocity(self.ENE,self.all_kpoints_indexes,self.avec,self.nk3,self.No_of_fermi_bands)
  def write_to_fermisurfer(self):
   if len(self.fermi_vel):
-   write_to_fermisurfer(self.bvec,self.ENE,self.all_kpoints_indexes,self.E_f,self.fermi_vel)
+   write_to_fermisurfer(self.bvec,self.ENE,self.all_kpoints_indexes,self.E_f,self.nk3,self.fermi_vel)
   else:
-   write_to_fermisurfer(self.bvec,self.ENE,self.all_kpoints_indexes,self.E_f)
+   write_to_fermisurfer(self.bvec,self.ENE,self.all_kpoints_indexes,self.E_f,self.nk3)
  def write_to_orbital_fermisurfer(self,RADWF):
   write_to_orbital_fermisurfer(self.bvec,self.ENE,self.all_kpoints_indexes,self.E_f,self.ALMBLM,RADWF,self.only_ENE_weights,inputs.dos_file,self.qtl)
  def write_to_qtl_fermisurfer(self):
-  write_to_qtl_fermisurfer(self.bvec,self.ENE,self.all_kpoints_indexes,self.E_f,self.only_ENE_weights,inputs.dos_file,self.qtl)
+  write_to_qtl_fermisurfer(self.bvec,self.ENE,self.all_kpoints_indexes,self.E_f,self.only_ENE_weights,inputs.dos_file,self.qtl,self.nk3)
  def read_qtl(self):
   self.qtl,self.No_of_bands,self.n_k,self.n_at=read_qtl(inputs.qtl_file,inputs.so)
 
@@ -97,11 +97,11 @@ def calc_fermi_velocity(ENE,all_kpoints_index,avec,nk3,No_of_fermi_bands):
     h.close()
     return vf
 
-def write_to_fermisurfer(bvec,ENE,all_kpoints_index,Ef,vf=1):
+def write_to_fermisurfer(bvec,ENE,all_kpoints_index,Ef,nk3,vf=1):
 #ENE[i][j] i-kpoint, j- band
- n_k2=int(round(len(all_kpoints_index)**(1/3.)))
+ 
  h=open('FS.frmsf','w')
- for i in range(3): h.write(str(n_k2)+' ')
+ for i in range(3): h.write(str(nk3[i])+' ')
  h.write('\n1\n')
  h.write(str(len(ENE))+'\n')
  for i in bvec:
@@ -161,21 +161,20 @@ def write_to_orbital_fermisurfer(bvec,ENE,all_kpoints_index,Ef,ALMBLM,overlap,en
     except: continue
     h.close()
 
-def write_to_qtl_fermisurfer(bvec,ENE,all_kpoints_index,Ef, ene_weights,dosfile,qtl):
+def write_to_qtl_fermisurfer(bvec,ENE,all_kpoints_index,Ef, ene_weights,dosfile,qtl,nk3):
 #ENE[i][j] i-kpoint, j- band
 #ALMBLM[k][at][j][l][m][0-3]
  #print(ene_weights)
  h=open(dosfile)
  dosy=[float(i) for i in h.readlines()[-4].split()[3:]]
  h.close()
- n_k2=int(round(len(all_kpoints_index)**(1/3.)))
  for at in range(len(qtl)): #over atoms
 #  for l in range(len(ALMBLM[0][at][0])): #over l
   for l in range(len(qtl[at][0][0])): #over l
     suma=0
  #  for m in range(len(ALMBLM[0][at][0][l])): #over atoms
     h=open('FS_atom_'+str(at)+'_orb_'+str(l)+'.frmsf','w')
-    for i in range(3): h.write(str(n_k2)+' ')
+    for i in range(3): h.write(str(nk3[i])+' ')
     h.write('\n1\n')
     h.write(str(len(ENE))+'\n')
     for i in bvec:
@@ -201,15 +200,15 @@ def rot_z(kv):
  Rz=np.array([ [np.cos(t),-np.sin(t),0],[np.sin(t),np.cos(t),0] ,[0,0,1]])
  return np.matmul(Rz,kv)
 
-def kpoints_from_cartesian_to_crystal(n_k_total,b_vec):
- nk=round(n_k_total**(1/3))
+def kpoints_from_cartesian_to_crystal(n_k_total,nk3,b_vec):
+ #nk=round(n_k_total**(1/3))
 
 # print (nk)
  KPOINTS=[]
  m=0
- for i in range(nk): 
-  for j in range(nk):
-   for k in range(nk):
+ for i in range(nk3[0]): 
+  for j in range(nk3[1]):
+   for k in range(nk3[2]):
     kv=np.transpose(np.array([i,j,k]))
 #    kv=rot_z(kv)
     KPOINTS.append([m for m in np.matmul(np.transpose(b_vec),kv)]+[m])
@@ -249,12 +248,12 @@ def read_all_kpoints(kgenfile,b_vec):
            noneq.append(i[0]-1)
           else: equiv.append(noneq.index(i[1]-1)) #is is equivalent to i[1]-th point
         print('number of non-equivalent k-points: '+str(len(noneq)))
-
+ 
         equiv2=[]
         for i in range(nk3[0]):
          for j in range(nk3[1]):
           for k in range(nk3[2]):
-           equiv2.append(equiv[i*(nk3[0]+1)*(nk3[1]+1)+j*(nk3[2]+1)+k])
+           equiv2.append(equiv[i*(nk3[2]+1)*(nk3[1]+1)+j*(nk3[2]+1)+k])
 #        print(len(equiv2))
         nk_noneq=len(noneq)
         return equiv2,nk3,nk_noneq #2
